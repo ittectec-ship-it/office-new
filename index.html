@@ -1,130 +1,209 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JP AI — Office Assistant</title>
-<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JP AI</title>
 <style>
-  :root { --copilot-grad: linear-gradient(135deg, #0078d4 0%, #7c3aed 45%, #ec4899 78%, #f59e0b 100%); --word-blue:#185abd; --border:#e2e8f0; --text-main:#0f172a; --text-muted:#64748b; }
-    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-  body { margin:0; background:#fff; color:var(--text-main); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
-  .header { background: linear-gradient(90deg, #0078d4, #7c3aed, #ec4899, #f59e0b); padding:12px 14px; display:flex; align-items:center; justify-content:space-between; color:#fff; }
-  .menu-btn{ background:rgba(255,255,255,0.2); border:0; color:#fff; padding:8px 12px; border-radius:10px; font-size:18px; cursor:pointer; }
-  .brand{ font-weight:800; font-size:22px; display:flex; align-items:center; gap:8px; }
-  .word-badge{ background:#f1f5f9; margin:10px; padding:10px; border-radius:12px; text-align:center; color:var(--word-blue); font-weight:700; border:1px solid var(--border); }
-  .keys-card{ margin:10px; padding:16px; border-radius:18px; border:1px solid #cbd5e1; box-shadow:0 4px 14px rgba(0,0,0,0.06); }
-  .keys-card b{ font-size:18px; }
-  .keys-card small{ color:var(--text-muted); }
-  .keys-card input{ width:100%; margin:12px 0; padding:14px; border-radius:12px; border:1px solid var(--border); background:#f8fafc; font-size:14px; }
-  .btn-save{ width:100%; padding:14px; border-radius:12px; border:0; background: linear-gradient(90deg, #0078d4, #7c3aed, #ec4899, #f59e0b); color:#fff; font-weight:800; font-size:16px; cursor:pointer; }
-  .btn-save:active{ transform:scale(0.98); }
-  .quick{ display:flex; gap:8px; padding:10px; }
-  .quick button{ background:#fff; border:1px solid var(--border); padding:8px 14px; border-radius:20px; font-weight:600; cursor:pointer; }
-  #chat{ flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:10px; }
-  .msg{ padding:12px; border-radius:14px; font-size:14px; line-height:1.5; max-width:92%; border:1px solid var(--border); }
-  .msg.user{ background:#185abd; color:#fff; margin-left:auto; }
-  .msg.ai{ background:#f8fafc; }
-  .bottom{ border-top:1px solid var(--border); padding:10px; display:flex; gap:8px; }
-  .bottom input{ flex:1; padding:12px; border-radius:10px; border:1px solid var(--border); }
-  .bottom button{ padding:12px 16px; border-radius:10px; border:0; background:#185abd; color:#fff; font-weight:700; cursor:pointer; }
-  #status{ margin:0 10px 8px; padding:8px; border-radius:8px; display:none; text-align:center; font-size:13px; }
+*{box-sizing:border-box} body{margin:0;font-family:Arial;background:#000;color:#fff;overflow:hidden}
+.top{background:#000;padding:12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #222}
+.top button{background:#111;color:#fff;border:1px solid #333;padding:10px 12px;border-radius:10px;font-size:18px}
+.top b{color:#90EE90;font-size:22px;flex:1;text-align:center;cursor:pointer}
+.top span{width:40px}
+.sidebar{position:fixed;top:0;left:-300px;width:280px;height:100%;background:#1a1a1a;z-index:99;transition:0.25s;padding:14px;display:flex;flex-direction:column;border-right:1px solid #333}
+.sidebar.open{left:0}
+.sidebar h2{margin:4px 0 14px 0;font-size:22px}
+.sidebar .search{display:flex;gap:6px;margin-bottom:10px}
+.sidebar .search input{flex:1;padding:11px;border-radius:10px;border:1px solid #333;background:#000;color:#fff}
+.sidebar .search button{background:#222;color:#fff;border:1px solid #333;padding:10px;border-radius:10px}
+.newchat{background:#ff6b5e;border:0;color:#fff;padding:13px;border-radius:24px;font-weight:bold;font-size:15px;margin-bottom:10px}
+.list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.chatItem{background:transparent;border:0;color:#fff;text-align:left;padding:12px 10px;border-radius:10px;font-size:14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.chatItem.active{background:#333}
+.chatItem span{overflow:hidden;text-overflow:ellipsis;flex:1;white-space:nowrap}
+.chatItem i{color:#888;font-style:normal;padding-left:8px}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;z-index:90}
+.overlay.show{display:block}
+.keys{background:#111;margin:10px;padding:14px;border-radius:14px;border:1px solid #222}
+.keys input{width:100%;padding:12px;margin:8px 0;border-radius:10px;border:1px solid #333;background:#000;color:#fff}
+.keys button{background:#90EE90;border:0;padding:12px 16px;border-radius:20px;font-weight:bold;color:#000;font-size:15px;width:100%}
+.keys small{color:#888}
+#chat{height:55vh;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:92%;padding:12px 14px;border-radius:14px;background:#111;color:#fff;white-space:pre-wrap;border:1px solid #222} .msg.user{background:#fff;color:#000;margin-left:auto;border-color:#fff} .msg small{opacity:.6;display:block;margin-bottom:4px}
+.msg img{width:100%;border-radius:12px;margin-top:8px;display:block}
+.msg .dl{display:inline-block;margin-top:8px;background:#90EE90;color:#000;padding:8px 14px;border-radius:20px;font-weight:bold;font-size:12px;text-decoration:none}
+.dateSep{text-align:center;font-size:11px;color:#888;margin:8px 0}
+.modes{display:flex;gap:8px;padding:8px 10px 0;background:#000}
+.modes button{flex:1;padding:11px;border-radius:20px;border:1px solid #333;background:#111;color:#fff;font-weight:bold}
+.modes button.active{background:#90EE90;color:#000;border-color:#90EE90}
+.input{display:flex;gap:8px;padding:10px;background:#000} .input input{flex:1;padding:14px;border-radius:24px;border:1px solid #333;background:#111;color:#fff} .input button{background:#90EE90;border:0;padding:14px 20px;border-radius:24px;font-weight:bold;color:#000}
+.hint{font-size:11px;color:#888;text-align:center;padding:0 10px 4px}
+.empty{text-align:center;color:#888;padding:30px 20px;font-size:14px}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <button class="menu-btn" onclick="toggleMenu()">☰</button>
-  <div class="brand">✦ JP AI</div>
-  <button class="menu-btn" onclick="openArena()">📤</button>
+<div id="overlay" class="overlay"></div>
+
+<div id="sidebar" class="sidebar">
+<h2>JP AI</h2>
+<div class="search">
+<input id="searchBox" placeholder="Search chats...">
+<button type="button" id="searchBtn">🔍</button>
+</div>
+<button type="button" class="newchat" id="newChatBtn">✎ New Chat</button>
+<div style="font-size:12px;color:#888;padding:6px 2px">Your Chats - Last 5 Days</div>
+<div id="chatList" class="list"></div>
+<div style="font-size:11px;color:#666;text-align:center;padding:8px">Tap JP AI logo 5x to change key</div>
 </div>
 
-<div class="word-badge">📘 Microsoft Word</div>
-
-<div class="keys-card" id="keyCard">
-  <b>Connect AI Key</b><br>
-  <small>Stored locally in your Office add-in cache.</small>
-  <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxxxxxxxxxx">
-  <button class="btn-save" onclick="saveKey()">Save Key & Start</button>
+<div class="top">
+<button type="button" id="menuBtn">☰</button>
+<b id="logoArea">JP AI</b>
+<span></span>
 </div>
 
-<div class="quick">
-  <button onclick="quickAction('Summarize this document in 5 bullet points')">✨ Summarize</button>
-  <button onclick="quickAction('Rewrite this to be more professional')">✍️ Rewrite</button>
-  <button onclick="openArena()">Open Arena →</button>
+<div id="keysBox" class="keys">
+<b>Your Key</b><br><small>Saved only in YOUR browser.</small><br>
+<input id="myKey" type="password" placeholder="Paste Your Key Here">
+<button type="button" id="saveBtn">Save Key and Hide Forever</button>
+<span id="keyStatus" style="font-size:12px;color:#90EE90"></span>
 </div>
 
+<p class="hint" id="memoryHint">Memory: 0 chats</p>
 <div id="chat"></div>
-<div id="status"></div>
 
-<div class="bottom">
-  <input id="userInput" placeholder="Ask JP AI..." onkeydown="if(event.key==='Enter') sendMessage()">
-  <button onclick="sendMessage()">Send</button>
+<div class="modes">
+<button type="button" id="chatModeBtn" class="active">💬 Chat</button>
+<button type="button" id="imageModeBtn">🖼️ Image</button>
+</div>
+
+<div class="input">
+<input id="q" placeholder="Ask anything...">
+<button type="button" id="sendBtn">Send</button>
 </div>
 
 <script>
-let apiKey = localStorage.getItem('jp_api_key') || "";
+var conversations = [];
+var activeId = null;
+var logoTaps = 0;
+var searchTerm = "";
+var mode = "chat";
 
-Office.onReady(() => {
-  if(apiKey){
-    document.getElementById('apiKeyInput').value = apiKey;
-    document.getElementById('keyCard').style.display='none';
-    showStatus("Key loaded! Ready.","success");
-  }
-});
-
-function saveKey(){
-  const val = document.getElementById('apiKeyInput').value.trim();
-  if(!val || val.length < 10){ showStatus("Paste a valid key first!","error"); return; }
-  localStorage.setItem('jp_api_key', val);
-  apiKey = val;
-  document.getElementById('keyCard').style.display='none';
-  showStatus("Key saved! You can now use JP AI.","success");
+function saveAll(){ localStorage.setItem("jp_convs_5days", JSON.stringify(conversations)); }
+function loadAll(){
+  try{
+    var saved = JSON.parse(localStorage.getItem("jp_convs_5days") || "[]");
+    var now = Date.now();
+    var fiveDays = 5 * 24 * 60 * 60 * 1000;
+    conversations = saved.filter(function(c){ return (now - (c.time||now)) < fiveDays; });
+  }catch(e){ conversations = []; }
+  if(conversations.length==0){
+    var id = Date.now().toString();
+    conversations = [{id:id, title:"New Chat", time:Date.now(), messages:[{role:"assistant", content:"Hi Jade! I am JP AI. Use 💬 Chat to talk, or 🖼️ Image to create posters, logos, CV designs and more.", time:Date.now()}]}];
+    activeId = id;
+  } else { activeId = conversations[0].id; }
+  updateHint();
 }
-
-function showStatus(msg, type){
-  const el=document.getElementById('status');
-  el.textContent=msg; el.style.display='block';
-  el.style.background = type==='error' ? '#fee2e2' : '#dcfce7';
-  el.style.color = type==='error' ? '#991b1b' : '#166534';
-  setTimeout(()=> el.style.display='none', 3000);
+function getActive(){ for(var i=0;i<conversations.length;i++){ if(conversations[i].id==activeId) return conversations[i]; } return conversations[0]; }
+function updateHint(){ document.getElementById("memoryHint").innerText = "Memory: " + conversations.length + " chats saved - I remember 5 days back"; }
+function renderList(){
+  var list = document.getElementById("chatList");
+  list.innerHTML = "";
+  var filtered = conversations.filter(function(c){ if(!searchTerm) return true; return c.title.toLowerCase().indexOf(searchTerm.toLowerCase()) > -1; });
+  if(filtered.length==0){ list.innerHTML = "<div class='empty'>No chats found</div>"; return; }
+  filtered.forEach(function(c){
+    var b = document.createElement("div");
+    b.className = "chatItem " + (c.id==activeId ? "active" : "");
+    var s = document.createElement("span"); s.innerText = c.title;
+    s.onclick = function(){ activeId = c.id; renderList(); renderChat(); closeSidebar(); };
+    var del = document.createElement("i"); del.innerText = "✕";
+    del.onclick = function(e){ e.stopPropagation(); if(confirm("Delete this chat?")){ conversations = conversations.filter(function(x){ return x.id != c.id; }); if(conversations.length==0){ var nid = Date.now().toString(); conversations.push({id:nid, title:"New Chat", time:Date.now(), messages:[{role:"assistant", content:"Hi Jade! Start a new chat.", time:Date.now()}]}); } activeId = conversations[0].id; saveAll(); renderList(); renderChat(); updateHint(); } };
+    b.appendChild(s); b.appendChild(del); list.appendChild(b);
+  });
 }
-
-function addMsg(text, isUser){
-  const c=document.getElementById('chat');
-  const d=document.createElement('div');
-  d.className = isUser ? 'msg user' : 'msg ai';
-  d.textContent = text;
-  c.appendChild(d);
+function formatDate(t){ var d = new Date(t); var today = new Date(); var yesterday = new Date(); yesterday.setDate(today.getDate()-1); if(d.toDateString()==today.toDateString()) return "Today"; if(d.toDateString()==yesterday.toDateString()) return "Yesterday"; return d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear(); }
+function renderChat(){
+  var c = document.getElementById("chat"); c.innerHTML = "";
+  var conv = getActive(); var lastDate = "";
+  conv.messages.forEach(function(m){
+    var dateStr = formatDate(m.time || Date.now());
+    if(dateStr != lastDate){ var sep = document.createElement("div"); sep.className = "dateSep"; sep.innerText = "--- " + dateStr + " ---"; c.appendChild(sep); lastDate = dateStr; }
+    var d = document.createElement("div"); d.className = "msg " + (m.role=="user" ? "user" : "");
+    var who = (m.role=="user" ? "You" : "JP AI");
+    var html = "<small>" + who + "</small>" + (m.content||"").split("\n").join("<br>");
+    if(m.imageUrl){ html += "<img src='" + m.imageUrl + "'><a class='dl' href='" + m.imageUrl + "' download='jp-ai-image.jpg' target='_blank'>⬇ Download Image</a>"; }
+    d.innerHTML = html; c.appendChild(d);
+  });
   c.scrollTop = c.scrollHeight;
 }
-
-function sendMessage(){
-  const input=document.getElementById('userInput');
-  const txt=input.value.trim(); if(!txt) return;
-  if(!apiKey){ showStatus("Save your AI Key first!","error"); document.getElementById('keyCard').style.display='block'; return; }
-  addMsg(txt, true); input.value='';
-  setTimeout(()=> addMsg("JP AI: Got it — '"+txt+"' — (connect your AI backend here)", false), 500);
+function openSidebar(){ document.getElementById("sidebar").classList.add("open"); document.getElementById("overlay").classList.add("show"); }
+function closeSidebar(){ document.getElementById("sidebar").classList.remove("open"); document.getElementById("overlay").classList.remove("show"); }
+function saveKeys(){ var b = document.getElementById("myKey").value.trim(); if(!b){ document.getElementById("keyStatus").innerText = "Paste your key first"; return; } localStorage.setItem("jp_key", b); document.getElementById("keysBox").style.display = "none"; document.getElementById("myKey").value = ""; }
+function updateKeysUI(){ var b = localStorage.getItem("jp_key") || ""; if(b){ document.getElementById("keysBox").style.display = "none"; } else { document.getElementById("keysBox").style.display = "block"; } }
+function setMode(m){
+  mode = m;
+  document.getElementById("chatModeBtn").className = (m=="chat" ? "active" : "");
+  document.getElementById("imageModeBtn").className = (m=="image" ? "active" : "");
+  document.getElementById("q").placeholder = (m=="image" ? "Describe image... e.g. Black November poster" : "Ask anything...");
 }
+async function send(){
+  var q = document.getElementById("q"); var text = q.value.trim(); if(!text) return;
+  var conv = getActive();
+  if(conv.title=="New Chat" || conv.messages.length<=1){ conv.title = text.slice(0,35); }
+  conv.messages.push({role:"user", content:text, time:Date.now()}); q.value = ""; renderChat(); renderList(); saveAll();
 
-function quickAction(prompt){
-  document.getElementById('userInput').value = prompt;
-  sendMessage();
-}
-
-function openArena(){
-  const url="https://arena.ai/agent";
-  if(window.Office && Office.context && Office.context.ui && Office.context.ui.openBrowserWindow){
-    Office.context.ui.openBrowserWindow(url);
-  }else{
-    window.open(url, "_blank");
+  // IMAGE MODE
+  if(mode=="image"){
+    var thinking = {role:"assistant", content:"🎨 Creating your image... please wait 10 seconds...", time:Date.now()};
+    conv.messages.push(thinking); renderChat();
+    var seed = Math.floor(Math.random()*1000000);
+    var imgUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(text + ", high quality, detailed, professional") + "?width=1024&height=1024&seed=" + seed + "&nologo=true";
+    thinking.content = "Here is your image for: " + text;
+    thinking.imageUrl = imgUrl;
+    renderChat(); renderList(); saveAll();
+    return;
   }
+
+  // CHAT MODE - also auto-detect "create image of..."
+  var lower = text.toLowerCase();
+  if(lower.indexOf("create image")>-1 || lower.indexOf("make image")>-1 || lower.indexOf("generate image")>-1 || lower.indexOf("create a poster")>-1 || lower.indexOf("draw ")>-1){
+    setMode("image");
+    var thinking2 = {role:"assistant", content:"🎨 I switched to Image mode. Creating it now...", time:Date.now()};
+    conv.messages.push(thinking2); renderChat();
+    var seed2 = Math.floor(Math.random()*1000000);
+    var imgUrl2 = "https://image.pollinations.ai/prompt/" + encodeURIComponent(text) + "?width=1024&height=1024&seed=" + seed2 + "&nologo=true";
+    thinking2.content = "Here is your image for: " + text;
+    thinking2.imageUrl = imgUrl2;
+    renderChat(); saveAll(); return;
+  }
+
+  var thinking = {role:"assistant", content:"Thinking...", time:Date.now()};
+  conv.messages.push(thinking); renderChat();
+  try{
+    var key = localStorage.getItem("jp_key");
+    if(!key) throw new Error("No key saved - tap JP AI logo 5 times to add key");
+    var msgs = []; var recent = conv.messages.slice(-40);
+    recent.forEach(function(c){ if(c.content.indexOf("Thinking")==0) return; if(c.content.indexOf("Error")==0) return; if(c.content.indexOf("Hi Jade")==0) return; if(c.imageUrl) return; msgs.push({role:c.role, content:c.content}); });
+    var r = await fetch("https://api.groq.com/openai/v1/chat/completions", {method:"POST", headers:{"Authorization":"Bearer "+key, "Content-Type":"application/json"}, body:JSON.stringify({model:"openai/gpt-oss-120b", messages:msgs})});
+    var j = await r.json(); if(j.error) throw new Error(j.error.message);
+    thinking.content = j.choices[0].message.content;
+  }catch(e){ thinking.content = "Error: " + e.message; }
+  renderChat(); renderList(); saveAll();
 }
 
-function toggleMenu(){
-  document.getElementById('keyCard').style.display = 
-    document.getElementById('keyCard').style.display==='none' ? 'block' : 'none';
-}
+document.getElementById("menuBtn").onclick = openSidebar;
+document.getElementById("overlay").onclick = closeSidebar;
+document.getElementById("newChatBtn").onclick = function(){ var id = Date.now().toString(); var conv = {id:id, title:"New Chat", time:Date.now(), messages:[{role:"assistant", content:"Hi Jade! New chat started.", time:Date.now()}]}; conversations.unshift(conv); activeId = id; saveAll(); renderList(); renderChat(); updateHint(); closeSidebar(); };
+document.getElementById("searchBox").oninput = function(){ searchTerm = this.value; renderList(); };
+document.getElementById("searchBtn").onclick = function(){ searchTerm = document.getElementById("searchBox").value; renderList(); };
+document.getElementById("saveBtn").onclick = saveKeys;
+document.getElementById("sendBtn").onclick = send;
+document.getElementById("chatModeBtn").onclick = function(){ setMode("chat"); };
+document.getElementById("imageModeBtn").onclick = function(){ setMode("image"); };
+document.getElementById("q").onkeydown = function(e){ if(e.key=="Enter") send(); };
+document.getElementById("logoArea").onclick = function(){ logoTaps++; if(logoTaps >= 5){ logoTaps = 0; document.getElementById("keysBox").style.display = "block"; document.getElementById("myKey").value = localStorage.getItem("jp_key") || ""; } setTimeout(function(){ logoTaps = 0; }, 2000); };
+document.getElementById("myKey").value = localStorage.getItem("jp_key") || "";
+loadAll(); updateKeysUI(); renderList(); renderChat();
 </script>
 </body>
 </html>
